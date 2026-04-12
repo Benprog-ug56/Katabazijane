@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jane Katabazi - Fresh Produce</title>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database-compat.js"></script>
+    <style>
+        :root { --primary: #27ae60; --bg: #f0f7f4; --red: #ef4444; }
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg); padding-bottom: 50px; }
+        
+        /* DOMAIN SHIELD CSS */
+        #domainShield {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #0f172a; z-index: 9999; display: flex;
+            align-items: center; justify-content: center; text-align: center;
+        }
+        .shield-card {
+            background: #1e293b; padding: 30px; border-radius: 15px; color: white;
+            width: 90%; max-width: 350px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+        .shield-input { width: 100%; padding: 12px; margin: 15px 0; border-radius: 8px; border: none; background: #0f172a; color: white; box-sizing: border-box; }
+        .shield-btn { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; color: white; background: var(--red); }
+
+        /* SHOWROOM CSS */
+        #mainShowroom { display: none; }
+        nav { background: var(--primary); padding: 15px; position: sticky; top: 0; z-index: 1000; display: flex; justify-content: space-around; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .nav-btn { background:none; border:none; color:white; font-weight:bold; cursor:pointer; font-size: 14px; }
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; padding: 15px; }
+        .card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.05); border: 1px solid #eee; transition: 0.3s; }
+        .card img { width: 100%; height: 140px; object-fit: cover; background: #f9f9f9; }
+        .card-info { padding: 12px; }
+        .price { color: var(--primary); font-weight: bold; font-size: 16px; display: block; margin: 5px 0; }
+        .btn-group { display: flex; gap: 5px; margin-top: 10px; }
+        .wa-btn { flex: 1; background: #25D366; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; text-decoration: none; text-align: center; font-size: 13px; }
+        .call-btn { background: #3498db; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; width: 45px; display: flex; align-items: center; justify-content: center; text-decoration: none; }
+    </style>
+</head>
+<body onload="checkDomain()">
+
+    <div id="domainShield" style="display: none;">
+        <div class="shield-card">
+            <h2 style="color: var(--red);">Security Alert</h2>
+            <p style="font-size: 13px; color: #94a3b8;">This showroom is restricted. Enter Bypass Key to view garden stock:</p>
+            <input type="password" id="bypassKey" class="shield-input" placeholder="Bypass Password">
+            <button class="shield-btn" onclick="verifyBypass()">UNLOCK SHOWROOM</button>
+        </div>
+    </div>
+
+    <div id="mainShowroom">
+        <nav>
+            <button class="nav-btn" onclick="location.reload()">HOME</button>
+            <button class="nav-btn" onclick="alert('Jane Katabazi\nLocation: Salaama Binzali stage, Kampala\nContact: +256 747 211914')">ABOUT JANE</button>
+        </nav>
+
+        <div style="text-align: center; padding: 20px 10px;">
+            <h2 style="margin:0; color: #2c3e50;">Jane's Fresh Garden</h2>
+            <p style="color: #666; font-size: 14px;">Organic produce from the garden to your kitchen.</p>
+        </div>
+
+        <div id="product-grid" class="product-grid">
+            <div style="text-align:center; grid-column: 1/-1; padding: 50px; color: #888;">Loading fresh stock...</div>
+        </div>
+    </div>
+
+    <script>
+        // 1. DOMAIN CHECK LOGIC
+        function checkDomain() {
+            // Restriction updated to katabazijane.netlify.app
+            const allowed = "katabazijane.netlify.app";
+            const current = window.location.hostname;
+
+            if (current === allowed || current === "localhost" || current === "127.0.0.1") {
+                showShowroom();
+            } else {
+                document.getElementById('domainShield').style.display = 'flex';
+            }
+        }
+
+        function verifyBypass() {
+            // Using your second password for the bypass key
+            if (document.getElementById('bypassKey').value === "Goot@5151.") {
+                showShowroom();
+            } else {
+                alert("Incorrect Bypass Key");
+            }
+        }
+
+        function showShowroom() {
+            document.getElementById('domainShield').style.display = 'none';
+            document.getElementById('mainShowroom').style.display = 'block';
+            startFirebase();
+        }
+
+        // 2. FIREBASE LOGIC
+        function startFirebase() {
+            const firebaseConfig = {
+                apiKey: "AIzaSyB9y4xcSykAbaIlC13MOo9T0laNuqWh6OY",
+                authDomain: "katabazi-jane1.firebaseapp.com",
+                projectId: "katabazi-jane1",
+                databaseURL: "https://katabazi-jane1-default-rtdb.firebaseio.com/",
+                storageBucket: "katabazi-jane1.firebasestorage.app",
+                messagingSenderId: "478612600510",
+                appId: "1:478612600510:web:242db5bea99613010c90ef"
+            };
+            firebase.initializeApp(firebaseConfig);
+            const db = firebase.database();
+
+            db.ref('showroom').on('value', snap => {
+                const grid = document.getElementById('product-grid');
+                grid.innerHTML = '';
+                const data = snap.val();
+                
+                if(!data) {
+                    grid.innerHTML = '<div style="text-align:center; grid-column:1/-1; padding:40px;">No items currently in stock. Check back soon!</div>';
+                    return;
+                }
+
+                Object.entries(data).reverse().forEach(([id, p]) => {
+                    const card = document.createElement('div');
+                    card.className = "card";
+                    card.innerHTML = `
+                        <img src="${p.image}" onerror="this.src='https://via.placeholder.com/200x140?text=Fresh+Produce'">
+                        <div class="card-info">
+                            <b style="font-size: 15px;">${p.name}</b>
+                            <span class="price">UGX ${p.price}</span>
+                            <p style="font-size: 12px; color: #777; margin: 5px 0; height: 32px; overflow: hidden;">${p.comment || ''}</p>
+                            <div class="btn-group">
+                                <a href="https://wa.me/256747211914?text=Hello Jane, I want to order ${p.name}" class="wa-btn">Order Now</a>
+                                <a href="tel:+256747211914" class="call-btn">📞</a>
+                            </div>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            });
+        }
+    </script>
+</body>
+</html>
