@@ -3,150 +3,238 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jane Katabazi - Fresh Produce Showroom</title>
+    <title>JK Legacy | Elite Showroom</title>
     <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database-compat.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #27ae60; --bg: #f0f7f4; --red: #ef4444; --dark: #2c3e50; }
-        body { margin: 0; font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg); padding-bottom: 50px; }
+        :root { --primary: #0ea5e9; --bg: #f8fafc; --text: #1e293b; --gold: #d97706; }
+        body { margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); padding-bottom: 100px; overflow-x: hidden; }
         
-        /* DOMAIN SHIELD */
-        #domainShield { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; z-index: 9999; display: flex; align-items: center; justify-content: center; text-align: center; }
-        .shield-card { background: #1e293b; padding: 30px; border-radius: 15px; color: white; width: 90%; max-width: 350px; }
-        .shield-input { width: 100%; padding: 12px; margin: 15px 0; border-radius: 8px; border: none; background: #0f172a; color: white; box-sizing: border-box; }
+        /* Brand Header */
+        .header { width: 100%; height: 180px; background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1541888946425-d81bb19480c5?q=80&w=1000') center/cover; display: flex; align-items: center; justify-content: center; color: white; text-align: center; }
         
-        /* NAVIGATION */
-        #mainShowroom { display: none; }
-        nav { background: var(--primary); padding: 15px; position: sticky; top: 0; z-index: 1000; display: flex; justify-content: space-around; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .nav-btn { background:none; border:none; color:white; font-weight:bold; cursor:pointer; font-size: 14px; }
+        /* Fixed Scrollable Navigation */
+        nav { background: white; display: flex; overflow-x: auto; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 1000; scrollbar-width: none; white-space: nowrap; }
+        nav::-webkit-scrollbar { display: none; }
+        .nav-btn { padding: 15px 25px; border: none; background: none; color: #64748b; font-weight: 800; cursor: pointer; font-size: 11px; text-transform: uppercase; flex-shrink: 0; border-bottom: 3px solid transparent; transition: 0.3s; }
+        .active-nav { color: var(--primary); border-bottom: 3px solid var(--primary); background: #f0f9ff; }
 
-        /* WELCOME SECTION WITH IMAGE */
-        .welcome-banner { background: white; margin: 15px; padding: 20px; border-radius: 15px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .owner-img { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary); margin-bottom: 10px; }
-        .welcome-banner h2 { color: var(--dark); margin: 0 0 5px 0; }
-        .welcome-banner p { color: #666; font-size: 14px; line-height: 1.5; margin: 0; }
-
-        /* INFO MODAL STYLES */
-        #infoModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; }
-        .modal-content { background: white; width: 85%; max-width: 400px; padding: 25px; border-radius: 20px; text-align: center; position: relative; }
-        .close-modal { position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer; color: #888; }
-
-        /* PRODUCT GRID */
-        .product-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; padding: 15px; }
-        .card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.05); border: 1px solid #eee; }
-        .card img { width: 100%; height: 140px; object-fit: cover; background: #f9f9f9; }
-        .card-info { padding: 12px; }
-        .price { color: var(--primary); font-weight: bold; font-size: 16px; display: block; margin: 5px 0; }
+        .page { display: none; padding: 20px; max-width: 600px; margin: 0 auto; animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .active-page { display: block; }
         
-        .btn-group { display: flex; gap: 5px; margin-top: 10px; }
-        .wa-btn { flex: 1; background: #25D366; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; text-decoration: none; text-align: center; font-size: 13px; }
-        .call-btn { background: #3498db; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; width: 45px; display: flex; align-items: center; justify-content: center; text-decoration: none; }
+        /* Product Cards & Stepper */
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .card { background: white; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; text-align: center; padding-bottom: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        .card img { width: 100%; height: 120px; object-fit: cover; }
+        
+        .qty-controls { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 10px 0; background: #f1f5f9; border-radius: 8px; width: 80%; margin-left: 10%; }
+        .qty-btn { background: none; border: none; font-size: 20px; font-weight: 800; color: var(--primary); cursor: pointer; padding: 5px; }
+        
+        .btn-add { background: var(--primary); color: white; border: none; padding: 12px; width: 90%; border-radius: 10px; font-weight: 800; cursor: pointer; transition: 0.2s; }
+        .btn-add:active { transform: scale(0.95); opacity: 0.9; }
+        
+        /* Inputs & Safety Form */
+        input, textarea { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 10px; border: 1px solid #cbd5e1; box-sizing: border-box; font-family: inherit; }
+        label { display: block; text-align: left; font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 4px; }
+
+        /* Floating Summary Bar */
+        #basket-bar { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; background: #1e293b; color: white; padding: 16px; border-radius: 20px; display: none; justify-content: space-between; align-items: center; z-index: 2000; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
     </style>
 </head>
-<body onload="checkDomain()">
+<body onload="initApp()">
 
-    <div id="domainShield" style="display: none;">
-        <div class="shield-card">
-            <h2 style="color: var(--red);">Security Check</h2>
-            <p style="font-size: 13px; color: #94a3b8;">Enter Bypass Key to view the showroom:</p>
-            <input type="password" id="bypassKey" class="shield-input" placeholder="Password">
-            <button class="wa-btn" style="background: var(--red); width: 100%;" onclick="verifyBypass()">UNLOCK</button>
+    <div class="header">
+        <div>
+            <h1 style="margin:0; letter-spacing:2px;">JK LEGACY</h1>
+            <p style="margin:0; font-size:12px; font-weight:600; opacity:0.9;">OFFICIAL SHOWROOM</p>
         </div>
     </div>
 
-    <div id="infoModal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="closeInfo()">&times;</span>
-            <img src="owner.jpg" class="owner-img" onerror="this.src='https://via.placeholder.com/100?text=Jane'">
-            <h3>Jane Katabazi</h3>
-            <p style="color: #666; font-size: 14px;">"From my garden to your kitchen, quality is guaranteed."</p>
-            <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
-            <p><b>📍 Location:</b> Salaama Binzali stage, Kampala</p>
-            <p><b>📞 Contact:</b> +256 747 211914</p>
-            <a href="tel:+256747211914" class="wa-btn" style="display:block; margin-top:10px; background: var(--primary);">Call Jane Directly</a>
+    <nav id="navbar">
+        <button class="nav-btn active-nav" onclick="showPage('home', this)">Home</button>
+        <button class="nav-btn" onclick="showPage('shop', this)">Shop</button>
+        <button class="nav-btn" onclick="showPage('cart', this)">Basket</button>
+        <button class="nav-btn" onclick="showPage('loyalty', this)">Loyalty</button>
+        <button class="nav-btn" onclick="showPage('refer', this)">Refer</button>
+        <button class="nav-btn" onclick="showPage('safety', this)">Safety</button>
+        <button class="nav-btn" onclick="showPage('me', this)">Account</button>
+    </nav>
+
+    <div id="home" class="page active-page">
+        <div class="card" style="padding:25px;">
+            <h3>Professional Engineering</h3>
+            <p style="font-size:14px; color:#64748b; line-height:1.6;">Welcome to the JK Legacy digital portal. Browse our services, manage your loyalty points, and place orders directly via WhatsApp.</p>
         </div>
     </div>
 
-    <div id="mainShowroom">
-        <nav>
-            <button class="nav-btn" onclick="location.reload()">HOME</button>
-            <button class="nav-btn" onclick="openInfo()">INFO & CONTACT</button>
-        </nav>
+    <div id="shop" class="page">
+        <div id="product-grid" class="grid"></div>
+    </div>
 
-        <div class="welcome-banner">
-            <img src="owner.jpg" class="owner-img" onerror="this.src='https://via.placeholder.com/100?text=Jane'">
-            <h2>Welcome to Jane's Garden</h2>
-            <p>Fresh, organic produce delivered daily around Kampala. Shop our current garden stock below.</p>
+    <div id="cart" class="page">
+        <h3>Order Summary</h3>
+        <div id="cart-items-list"></div>
+        <div class="card" style="padding:20px; margin-top:15px; border-top: 4px solid var(--primary);">
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">Subtotal: <b id="sub-total">0</b></div>
+            <div style="display:flex; justify-content:space-between; color:var(--primary); margin-bottom:15px;">Discount: <b id="disc-val">0%</b></div>
+            <div style="display:flex; justify-content:space-between; font-size:20px; border-top:1px solid #eee; padding-top:10px;">Total: <b id="grand-total">0</b></div>
+            <button class="btn-add" style="width:100%; margin-top:20px; padding:18px;" onclick="sendWhatsApp()">CONFIRM ORDER</button>
         </div>
+    </div>
 
-        <div id="product-grid" class="product-grid">
-            <div style="text-align:center; grid-column: 1/-1; padding: 50px; color: #888;">Fetching fresh stock...</div>
+    <div id="loyalty" class="page">
+        <div class="card" style="padding:30px; background:linear-gradient(135deg, #0ea5e9, #6366f1); color:white;">
+            <p style="font-size:12px; margin:0; opacity:0.8;">CURRENT STATUS</p>
+            <h1 id="tier-name" style="margin:5px 0 20px 0;">BRONZE</h1>
+            <div style="background:rgba(255,255,255,0.2); padding:15px; border-radius:12px;">
+                Points Balance: <b id="pts-display" style="font-size:20px;">0</b>
+            </div>
         </div>
+    </div>
+
+    <div id="refer" class="page">
+        <div class="card" style="padding:20px;">
+            <h3>Referral Program</h3>
+            <p style="font-size:14px; color:#64748b;">Share your unique Client ID with a friend to earn +10 points on their first order!</p>
+            <div style="background:#f1f5f9; padding:20px; border-radius:15px; margin-top:15px;">
+                <small>YOUR REFERRAL CODE</small>
+                <h2 id="ref-id-display" style="color:var(--primary); margin:5px 0;">----</h2>
+            </div>
+        </div>
+    </div>
+
+    <div id="safety" class="page">
+        <div class="card" style="padding:20px;">
+            <h3 style="margin-bottom:5px;">Safety Center</h3>
+            <p style="color:#64748b; font-size:13px; margin-bottom:20px;">Report work quality or safety issues directly to management.</p>
+            
+            <label>Worker ID / Job ID</label>
+            <input type="text" id="rep-id" placeholder="e.g. JKW-4521">
+            
+            <label>Detailed Description</label>
+            <textarea id="rep-msg" placeholder="Tell us what happened..." style="height:120px;"></textarea>
+            
+            <button class="btn-add" style="width:100%;" onclick="submitReport()">SUBMIT REPORT</button>
+        </div>
+    </div>
+
+    <div id="me" class="page">
+        <div id="auth-ui" class="card" style="padding:20px;">
+            <h3>Client Login</h3>
+            <input type="email" id="c-email" placeholder="Email">
+            <input type="password" id="c-pass" placeholder="Password">
+            <button class="btn-add" onclick="custAuth()">Sign In / Up</button>
+        </div>
+        <div id="id-card" style="display:none;" class="card">
+            <div style="padding:25px;">
+                <h2 id="user-name-display">--</h2>
+                <p id="user-id-display" style="color:var(--primary); font-weight:800;">--</p>
+                <hr style="opacity:0.1; margin:20px 0;">
+                <button onclick="auth.signOut().then(()=>location.reload())" style="background:none; border:none; color:red; font-weight:800; cursor:pointer;">Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="basket-bar" onclick="showPage('cart', document.querySelectorAll('.nav-btn')[2])">
+        <span id="basket-count">0 Items</span>
+        <span style="font-weight:800;">CHECKOUT →</span>
     </div>
 
     <script>
-        function checkDomain() {
-            const allowed = "katabazijane.netlify.app";
-            if (window.location.hostname === allowed || window.location.hostname === "localhost") {
-                showShowroom();
-            } else { document.getElementById('domainShield').style.display = 'flex'; }
+        const config = { apiKey: "AIzaSyB9y4xcSykAbaIlC13MOo9T0laNuqWh6OY", databaseURL: "https://katabazi-jane1-default-rtdb.firebaseio.com/" };
+        firebase.initializeApp(config);
+        const auth = firebase.auth(), db = firebase.database();
+        
+        let cart = {}; 
+        let discRate = 0;
+
+        function showPage(id, btn) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
+            document.getElementById(id).classList.add('active-page');
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active-nav'));
+            btn.classList.add('active-nav');
+            btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
         }
 
-        function verifyBypass() {
-            if (document.getElementById('bypassKey').value === "Goot@5151.") { showShowroom(); }
-            else { alert("Incorrect Key"); }
-        }
-
-        function showShowroom() {
-            document.getElementById('domainShield').style.display = 'none';
-            document.getElementById('mainShowroom').style.display = 'block';
-            startFirebase();
-        }
-
-        function openInfo() { document.getElementById('infoModal').style.display = 'flex'; }
-        function closeInfo() { document.getElementById('infoModal').style.display = 'none'; }
-
-        function startFirebase() {
-            const config = {
-                apiKey: "AIzaSyB9y4xcSykAbaIlC13MOo9T0laNuqWh6OY",
-                authDomain: "katabazi-jane1.firebaseapp.com",
-                projectId: "katabazi-jane1",
-                databaseURL: "https://katabazi-jane1-default-rtdb.firebaseio.com/",
-                storageBucket: "katabazi-jane1.firebasestorage.app",
-                messagingSenderId: "478612600510",
-                appId: "1:478612600510:web:242db5bea99613010c90ef"
-            };
-            firebase.initializeApp(config);
-            const db = firebase.database();
-
-            db.ref('showroom').on('value', snap => {
-                const grid = document.getElementById('product-grid');
-                grid.innerHTML = '';
-                const data = snap.val();
-                
-                if(!data) {
-                    grid.innerHTML = '<div style="text-align:center; grid-column:1/-1; padding:40px;">No items currently in stock.</div>';
-                    return;
-                }
-
-                Object.entries(data).reverse().forEach(([id, p]) => {
-                    const card = document.createElement('div');
-                    card.className = "card";
-                    card.innerHTML = `
-                        <img src="${p.image}" onerror="this.src='https://via.placeholder.com/200x140?text=Fresh+Produce'">
-                        <div class="card-info">
-                            <b style="font-size: 15px;">${p.name}</b>
-                            <span class="price">UGX ${p.price}</span>
-                            <div class="btn-group">
-                                <a href="https://wa.me/256747211914?text=Hello Jane, I want to order ${p.name}" class="wa-btn">Order Now</a>
-                                <a href="tel:+256747211914" class="call-btn">📞</a>
-                            </div>
-                        </div>
-                    `;
-                    grid.appendChild(card);
+        function initApp() {
+            db.ref('showroom').on('value', s => {
+                const grid = document.getElementById('product-grid'); grid.innerHTML = '';
+                s.forEach(c => {
+                    const p = c.val(), pID = c.key;
+                    grid.innerHTML += `<div class="card"><img src="${p.image}"><div style="padding:10px;"><b style="font-size:13px;">${p.name}</b><br><small>UGX ${parseInt(p.price).toLocaleString()}</small><div class="qty-controls"><button class="qty-btn" onclick="chgQty('${pID}', -1)">-</button><span class="qty-val" id="qty-${pID}">0</span><button class="qty-btn" onclick="chgQty('${pID}', 1)">+</button></div><button class="btn-add" onclick="updCart('${pID}', '${p.name}', ${p.price})">Update Basket</button></div></div>`;
                 });
             });
         }
+
+        function chgQty(id, d) {
+            const el = document.getElementById('qty-'+id);
+            let v = Math.max(0, parseInt(el.innerText) + d);
+            el.innerText = v;
+        }
+
+        function updCart(id, n, p) {
+            const q = parseInt(document.getElementById('qty-'+id).innerText);
+            if(q > 0) cart[id] = { n, p, q }; else delete cart[id];
+            updUI();
+        }
+
+        function updUI() {
+            const bar = document.getElementById('basket-bar'), list = document.getElementById('cart-items-list');
+            let sub = 0, count = 0;
+            list.innerHTML = "";
+            Object.values(cart).forEach(i => {
+                let line = i.p * i.q; sub += line; count += i.q;
+                list.innerHTML += `<div class="card" style="padding:15px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;"><div><b>${i.n}</b><br><small>${i.q} units</small></div><b>${line.toLocaleString()}</b></div>`;
+            });
+            let total = sub - (sub * discRate);
+            document.getElementById('sub-total').innerText = sub.toLocaleString() + " UGX";
+            document.getElementById('grand-total').innerText = total.toLocaleString() + " UGX";
+            document.getElementById('disc-val').innerText = (discRate * 100) + "%";
+            document.getElementById('basket-count').innerText = count + " Items";
+            bar.style.display = count > 0 ? 'flex' : 'none';
+        }
+
+        function submitReport() {
+            const wID = document.getElementById('rep-id').value, msg = document.getElementById('rep-msg').value;
+            if(!wID || !msg) return alert("Fill all fields");
+            db.ref('reports').push({ workerID: wID, message: msg, timestamp: Date.now(), client: window.myID || "Guest" })
+            .then(() => { alert("Report Submitted"); document.getElementById('rep-id').value = ""; document.getElementById('rep-msg').value = ""; });
+        }
+
+        function sendWhatsApp() {
+            if(!window.myID) return alert("Login First");
+            let items = Object.values(cart).map(i => `• ${i.n} (x${i.q}) - UGX ${(i.p*i.q).toLocaleString()}`).join('\n');
+            let total = Object.values(cart).reduce((s,i)=>s+(i.p*i.q), 0);
+            let msg = `*JK LEGACY ORDER*\nID: ${window.myID}\n\n${items}\n\n*Total:* UGX ${(total-(total*discRate)).toLocaleString()}`;
+            window.location.href = `https://wa.me/256747211914?text=${encodeURIComponent(msg)}`;
+        }
+
+        function custAuth() {
+            const e = document.getElementById('c-email').value, p = document.getElementById('c-pass').value;
+            auth.signInWithEmailAndPassword(e, p).catch(() => auth.createUserWithEmailAndPassword(e, p));
+        }
+
+        auth.onAuthStateChanged(u => {
+            if(u) {
+                db.ref('customers/' + u.uid).on('value', s => {
+                    let d = s.val();
+                    if(d) {
+                        document.getElementById('auth-ui').style.display='none'; document.getElementById('id-card').style.display='block';
+                        document.getElementById('user-name-display').innerText = d.name; document.getElementById('user-id-display').innerText = d.indexID;
+                        document.getElementById('ref-id-display').innerText = d.indexID; document.getElementById('pts-display').innerText = d.points || 0;
+                        window.myID = d.indexID;
+                        discRate = d.points > 500 ? 0.10 : (d.points > 100 ? 0.05 : 0);
+                        document.getElementById('tier-name').innerText = discRate === 0.10 ? "GOLD VIP" : (discRate === 0.05 ? "SILVER" : "BRONZE");
+                        updUI();
+                    } else {
+                        let n = prompt("Name:"); db.ref('customers/'+u.uid).set({ name: n, indexID: "JKC-"+Math.floor(1000+Math.random()*9999), points: 0 });
+                    }
+                });
+            }
+        });
     </script>
 </body>
 </html>
